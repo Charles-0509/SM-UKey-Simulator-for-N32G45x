@@ -1,0 +1,42 @@
+# Keil / ARMCC build outputs
+**/Objects/
+**/Listings/
+**/RTE/
+**/bin/
+*.axf
+*.hex
+*.bin
+*.elf
+*.map
+*.lst
+*.o
+*.crf
+*.d
+*.lnp
+*.htm
+*.iex
+
+# Keil user/session files
+*.uvguix.*
+*.uvgui.*
+*.uvopt
+*.uvoptx
+*.uvmpw
+*.dep
+JLinkLog.txt
+JLinkSettings.ini
+
+# Local simulator/generated data
+sm_ukey_sim*.exe
+sim_secure_area.bin
+
+# Original vendor SDK backup/extracts
+Nationstech.N32G45x_Library.2.2.0/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+*.bak
+
