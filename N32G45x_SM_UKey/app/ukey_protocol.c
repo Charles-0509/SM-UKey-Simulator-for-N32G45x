@@ -31,6 +31,26 @@ static char *next_token(char **p)
     return tok;
 }
 
+static char ascii_upper(char ch)
+{
+    if (ch >= 'a' && ch <= 'z') {
+        return (char)(ch - ('a' - 'A'));
+    }
+    return ch;
+}
+
+static int cmd_equals(const char *a, const char *b)
+{
+    while (*a && *b) {
+        if (ascii_upper(*a) != ascii_upper(*b)) {
+            return 0;
+        }
+        a++;
+        b++;
+    }
+    return (*a == '\0' && *b == '\0') ? 1 : 0;
+}
+
 static char *rest_token(char **p)
 {
     char *s = *p;
@@ -149,12 +169,12 @@ void ukey_on_command(const char *line, char *out, size_t out_size)
         return;
     }
 
-    if (strcmp(cmd, "HELP") == 0) {
+    if (cmd_equals(cmd, "HELP")) {
         snprintf(out, out_size, "OK HELP INFO INIT VERIFY_PIN GET_PUBKEY SIGN SM3 STORE STORE_HEX READ ERASE KEY1 KEY2 KEY3");
-    } else if (strcmp(cmd, "INFO") == 0) {
+    } else if (cmd_equals(cmd, "INFO")) {
         snprintf(out, out_size, "OK INFO VERSION=%s STATE=%s RETRIES=%u DEV=%s",
                  UKEY_VERSION, ukey_state_name(ctx->state), ctx->store.pin_retries, platform_device_id());
-    } else if (strcmp(cmd, "INIT") == 0) {
+    } else if (cmd_equals(cmd, "INIT")) {
         char *pin = next_token(&p);
         if (!pin || strlen(pin) > UKEY_PIN_MAX_LEN) {
             snprintf(out, out_size, "ERR ARG");
@@ -164,19 +184,19 @@ void ukey_on_command(const char *line, char *out, size_t out_size)
             ctx->pending = PENDING_INIT;
             snprintf(out, out_size, "WAIT PRESS KEY1 TO INIT, KEY2 TO CANCEL");
         }
-    } else if (strcmp(cmd, "VERIFY_PIN") == 0) {
+    } else if (cmd_equals(cmd, "VERIFY_PIN")) {
         char *pin = next_token(&p);
         ukey_status_t st = pin ? ukey_verify_pin(pin) : UKEY_ERR_ARG;
         if (st == UKEY_OK) snprintf(out, out_size, "OK PIN VERIFIED");
         else reply_status(out, out_size, st);
-    } else if (strcmp(cmd, "GET_PUBKEY") == 0) {
+    } else if (cmd_equals(cmd, "GET_PUBKEY")) {
         char hex[CRYPTO_SM2_PUB_LEN * 2u + 1u];
         if (!ctx->store.initialized || bytes_to_hex(ctx->store.sm2_pub, CRYPTO_SM2_PUB_LEN, hex, sizeof(hex)) != 0) {
             snprintf(out, out_size, "ERR STATE");
         } else {
             snprintf(out, out_size, "OK PUBKEY 04%s", hex);
         }
-    } else if (strcmp(cmd, "SIGN") == 0) {
+    } else if (cmd_equals(cmd, "SIGN")) {
         char *hex_msg = next_token(&p);
         if (ctx->state != UKEY_STATE_AUTHED) {
             snprintf(out, out_size, "ERR AUTH");
@@ -186,7 +206,7 @@ void ukey_on_command(const char *line, char *out, size_t out_size)
             ctx->pending = PENDING_SIGN;
             snprintf(out, out_size, "WAIT PRESS KEY1 TO SIGN, KEY2 TO CANCEL");
         }
-    } else if (strcmp(cmd, "SM3") == 0) {
+    } else if (cmd_equals(cmd, "SM3")) {
         uint8_t data[UKEY_MAX_DATA_LEN];
         uint8_t digest[CRYPTO_SM3_DIGEST_LEN];
         char hex[CRYPTO_SM3_DIGEST_LEN * 2u + 1u];
@@ -199,7 +219,7 @@ void ukey_on_command(const char *line, char *out, size_t out_size)
         } else {
             snprintf(out, out_size, "OK SM3 %s", hex);
         }
-    } else if (strcmp(cmd, "STORE") == 0) {
+    } else if (cmd_equals(cmd, "STORE")) {
         char *name = next_token(&p);
         char *value = rest_token(&p);
 
@@ -215,7 +235,7 @@ void ukey_on_command(const char *line, char *out, size_t out_size)
             ctx->pending = PENDING_STORE;
             snprintf(out, out_size, "WAIT PRESS KEY1 TO STORE, KEY2 TO CANCEL");
         }
-    } else if (strcmp(cmd, "STORE_HEX") == 0) {
+    } else if (cmd_equals(cmd, "STORE_HEX")) {
         size_t len = 0u;
         char *name = next_token(&p);
         char *hex_data = next_token(&p);
@@ -232,7 +252,7 @@ void ukey_on_command(const char *line, char *out, size_t out_size)
             ctx->pending = PENDING_STORE;
             snprintf(out, out_size, "WAIT PRESS KEY1 TO STORE, KEY2 TO CANCEL");
         }
-    } else if (strcmp(cmd, "READ") == 0) {
+    } else if (cmd_equals(cmd, "READ")) {
         char *name = next_token(&p);
 
         if (ctx->state != UKEY_STATE_AUTHED) {
@@ -245,14 +265,14 @@ void ukey_on_command(const char *line, char *out, size_t out_size)
             ctx->pending = PENDING_READ;
             snprintf(out, out_size, "WAIT PRESS KEY1 TO READ, KEY2 TO CANCEL");
         }
-    } else if (strcmp(cmd, "ERASE") == 0) {
+    } else if (cmd_equals(cmd, "ERASE")) {
         ctx->pending = PENDING_ERASE;
         snprintf(out, out_size, "WAIT PRESS KEY1 TO ERASE, KEY2 TO CANCEL");
-    } else if (strcmp(cmd, "KEY1") == 0) {
+    } else if (cmd_equals(cmd, "KEY1")) {
         ukey_on_key(UKEY_KEY_CONFIRM, out, out_size);
-    } else if (strcmp(cmd, "KEY2") == 0) {
+    } else if (cmd_equals(cmd, "KEY2")) {
         ukey_on_key(UKEY_KEY_CANCEL, out, out_size);
-    } else if (strcmp(cmd, "KEY3") == 0) {
+    } else if (cmd_equals(cmd, "KEY3")) {
         ukey_on_key(UKEY_KEY_MODE, out, out_size);
     } else {
         snprintf(out, out_size, "ERR UNKNOWN_CMD");

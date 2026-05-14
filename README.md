@@ -63,6 +63,8 @@ READ TOKEN
 KEY1
 ```
 
+Command names are case-insensitive, so `info`, `Info`, and `INFO` are equivalent. Parameters keep their original case.
+
 `STORE` saves plaintext password/passkey-style secrets. `STORE_HEX` saves binary data encoded as hex. Both `STORE` and `READ` require physical confirmation with `KEY1` before Flash write or plaintext output. `KEY1` and `KEY2` can be pressed on the board after a `WAIT ...` response. They are mapped to PA4 and PA5 by default, active-low with internal pull-ups. The same names can still be sent as text commands for testing.
 
 ## Notes
