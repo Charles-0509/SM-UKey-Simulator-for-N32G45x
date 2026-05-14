@@ -206,8 +206,14 @@ void USB_Interrupts_Config(void)
 *******************************************************************************/
 void USART_Config_Default(void)
 {
-    /* This project uses USB CDC directly and does not bridge to USART1.
-       Leaving USART1 RX enabled causes floating-pin noise to appear in SSCOM. */
+    USART_InitStructure.BaudRate = 115200;
+    USART_InitStructure.WordLength          = USART_WL_8B;
+    USART_InitStructure.StopBits            = USART_STPB_1;
+    USART_InitStructure.Parity              = USART_PE_NO;
+    USART_InitStructure.HardwareFlowControl = USART_HFCTRL_NONE;
+    USART_InitStructure.Mode                = USART_MODE_RX | USART_MODE_TX;
+
+    USART_COM_Init(&USART_InitStructure);
 }
 
 /*******************************************************************************
@@ -220,6 +226,14 @@ void USART_Config_Default(void)
 *******************************************************************************/
 bool USART_Config(void)
 {
+    USART_InitStructure.BaudRate = linecoding.bitrate;
+    USART_InitStructure.WordLength          = USART_WL_8B;
+    USART_InitStructure.StopBits            = USART_STPB_1;
+    USART_InitStructure.Parity              = USART_PE_NO;
+    USART_InitStructure.HardwareFlowControl = USART_HFCTRL_NONE;
+    USART_InitStructure.Mode                = USART_MODE_RX | USART_MODE_TX;
+
+    USART_COM_Init(&USART_InitStructure);
     return (true);
 }
 

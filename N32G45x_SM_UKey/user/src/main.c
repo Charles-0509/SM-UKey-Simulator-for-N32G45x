@@ -37,6 +37,7 @@
 #include "usb_lib.h"
 #include "usb_pwr.h"
 #include "ukey_usb_bridge.h"
+#include "ukey_uart_bridge.h"
 
 __IO uint32_t TimingDelay     = 0;
 
@@ -58,7 +59,9 @@ int main(void)
     Set_USBClock();
 
     USB_Init();
+    USART_Config_Default();
     ukey_usb_bridge_init();
+    ukey_uart_bridge_init();
 
     while (1)
     {

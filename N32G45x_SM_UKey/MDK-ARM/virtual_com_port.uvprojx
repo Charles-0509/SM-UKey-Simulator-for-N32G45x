@@ -547,6 +547,11 @@
               <FileType>1</FileType>
               <FilePath>..\port\ukey_usb_bridge.c</FilePath>
             </File>
+            <File>
+              <FileName>ukey_uart_bridge.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\port\ukey_uart_bridge.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

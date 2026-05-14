@@ -37,6 +37,7 @@
 #include "main.h"
 #include "usb_istr.h"
 #include "hw_config.h"
+#include "ukey_uart_bridge.h"
 /** @addtogroup N32G45X_StdPeriph_Template
  * @{
  */
@@ -143,7 +144,15 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
 *******************************************************************************/
 void USART1_IRQHandler(void)
 {
-    /* USART1 is unused. USB CDC packets are handled in EP3_OUT_Callback(). */
+    if (USART_GetFlagStatus(USART1, USART_FLAG_RXDNE) != RESET)
+    {
+        ukey_uart_receive_byte((uint8_t)USART_ReceiveData(USART1));
+    }
+
+    if (USART_GetFlagStatus(USART1, USART_FLAG_OREF) != RESET)
+    {
+        (void)USART_ReceiveData(USART1);
+    }
 }
 
 /*******************************************************************************
