@@ -16,7 +16,7 @@ ERR ...
 WAIT ...
 ```
 
-二进制数据统一用十六进制字符串表示。
+`SIGN` 和 `SM3` 的二进制数据用十六进制字符串表示。`STORE` 用于保存明文密码/通行密钥，`STORE_HEX` 用于保存十六进制编码的二进制数据。
 
 ## 命令表
 
@@ -29,8 +29,9 @@ WAIT ...
 | `GET_PUBKEY` | 无 | 导出 SM2 公钥 |
 | `SIGN` | `HEX_CHALLENGE` | 对挑战签名，需 KEY1 确认 |
 | `SM3` | `HEX_DATA` | 计算 SM3 摘要 |
-| `STORE` | `NAME HEX_DATA` | 用 SM4 加密保存一条敏感数据 |
-| `READ` | `NAME` | 解密读取敏感数据 |
+| `STORE` | `NAME PLAINTEXT_SECRET` | 用 SM4 加密保存一条明文密码/通行密钥，需 KEY1 确认 |
+| `STORE_HEX` | `NAME HEX_DATA` | 用 SM4 加密保存一条二进制敏感数据，需 KEY1 确认 |
+| `READ` | `NAME` | 解密读取敏感数据，需 KEY1 确认后明文输出 |
 | `ERASE` | 无 | 擦除安全区，需 KEY1 确认 |
 | `KEY1` | 无 | 仿真确认键 |
 | `KEY2` | 无 | 仿真取消键 |
@@ -48,7 +49,8 @@ LOCKED
 
 AUTHED
   SIGN + KEY1 -> AUTHED
-  STORE/READ/SM3 -> AUTHED
+  STORE/STORE_HEX/READ + KEY1 -> AUTHED
+  SM3 -> AUTHED
 
 PIN_LOCKED
   只能 ERASE + KEY1 恢复出厂
@@ -61,4 +63,3 @@ PIN_LOCKED
 | KEY1 | 用户确认/授权 |
 | KEY2 | 取消当前等待操作 |
 | KEY3 | 模式切换或状态显示 |
-

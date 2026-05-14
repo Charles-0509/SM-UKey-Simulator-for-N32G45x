@@ -5,7 +5,7 @@
 ## Features
 
 - USB CDC virtual COM communication for SSCOM-style testing.
-- Text command protocol: `INFO`, `INIT`, `VERIFY_PIN`, `GET_PUBKEY`, `SIGN`, `SM3`, `STORE`, `READ`, `ERASE`.
+- Text command protocol: `INFO`, `INIT`, `VERIFY_PIN`, `GET_PUBKEY`, `SIGN`, `SM3`, `STORE`, `STORE_HEX`, `READ`, `ERASE`.
 - Physical button support: `KEY1` is PA4 confirm/authorize, `KEY2` is PA5 cancel. The text commands `KEY1` and `KEY2` are still available for simulation.
 - UKey-like state machine with PIN retry limit and user-confirmed sensitive operations.
 - SM3 through the N32G45x official algorithm library.
@@ -54,11 +54,13 @@ GET_PUBKEY
 SIGN 11223344556677889900AABBCCDDEEFF
 KEY1
 SM3 616263
-STORE TOKEN 4142434431323334
+STORE TOKEN MyPasskey-123456
+KEY1
 READ TOKEN
+KEY1
 ```
 
-`KEY1` and `KEY2` can be pressed on the board after a `WAIT ...` response. They are mapped to PA4 and PA5 by default, active-low with internal pull-ups. The same names can still be sent as text commands for testing.
+`STORE` saves plaintext password/passkey-style secrets. `STORE_HEX` saves binary data encoded as hex. Both `STORE` and `READ` require physical confirmation with `KEY1` before Flash write or plaintext output. `KEY1` and `KEY2` can be pressed on the board after a `WAIT ...` response. They are mapped to PA4 and PA5 by default, active-low with internal pull-ups. The same names can still be sent as text commands for testing.
 
 ## Notes
 

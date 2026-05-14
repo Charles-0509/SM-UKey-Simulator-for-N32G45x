@@ -31,6 +31,20 @@ static char *next_token(char **p)
     return tok;
 }
 
+static char *rest_token(char **p)
+{
+    char *s = *p;
+    char *end;
+
+    while (*s == ' ' || *s == '\t') s++;
+    end = s + strlen(s);
+    while (end > s && (end[-1] == ' ' || end[-1] == '\t' || end[-1] == '\r' || end[-1] == '\n')) {
+        *--end = '\0';
+    }
+    *p = end;
+    return (*s == '\0') ? NULL : s;
+}
+
 void ukey_protocol_init(void)
 {
     ukey_state_init();
@@ -74,6 +88,39 @@ void ukey_on_key(ukey_key_t key, char *out, size_t out_size)
         ctx->pending = PENDING_NONE;
         return;
     }
+    if (ctx->pending == PENDING_STORE) {
+        ukey_status_t st = ukey_store_value(ctx->pending_name, ctx->pending_msg, ctx->pending_msg_len);
+        ctx->pending = PENDING_NONE;
+        if (st == UKEY_OK) snprintf(out, out_size, "OK STORE DONE");
+        else reply_status(out, out_size, st);
+        return;
+    }
+    if (ctx->pending == PENDING_READ) {
+        uint8_t data[UKEY_STORE_VALUE_LEN];
+        size_t len = 0u;
+        ukey_status_t st = ukey_read_value(ctx->pending_name, data, sizeof(data), &len);
+
+        ctx->pending = PENDING_NONE;
+        if (st == UKEY_OK) {
+            size_t prefix_len;
+
+            if (len >= out_size) {
+                snprintf(out, out_size, "ERR OUTPUT_TOO_LONG");
+            } else {
+                snprintf(out, out_size, "OK READ %s ", ctx->pending_name);
+                prefix_len = strlen(out);
+                if ((prefix_len + len) < out_size) {
+                    memcpy(out + prefix_len, data, len);
+                    out[prefix_len + len] = '\0';
+                } else {
+                    snprintf(out, out_size, "ERR OUTPUT_TOO_LONG");
+                }
+            }
+        } else {
+            reply_status(out, out_size, st);
+        }
+        return;
+    }
     if (ctx->pending == PENDING_ERASE) {
         secure_store_factory_default(&ctx->store);
         (void)secure_store_save(&ctx->store);
@@ -103,7 +150,7 @@ void ukey_on_command(const char *line, char *out, size_t out_size)
     }
 
     if (strcmp(cmd, "HELP") == 0) {
-        snprintf(out, out_size, "OK HELP INFO INIT VERIFY_PIN GET_PUBKEY SIGN SM3 STORE READ ERASE KEY1 KEY2 KEY3");
+        snprintf(out, out_size, "OK HELP INFO INIT VERIFY_PIN GET_PUBKEY SIGN SM3 STORE STORE_HEX READ ERASE KEY1 KEY2 KEY3");
     } else if (strcmp(cmd, "INFO") == 0) {
         snprintf(out, out_size, "OK INFO VERSION=%s STATE=%s RETRIES=%u DEV=%s",
                  UKEY_VERSION, ukey_state_name(ctx->state), ctx->store.pin_retries, platform_device_id());
@@ -153,22 +200,51 @@ void ukey_on_command(const char *line, char *out, size_t out_size)
             snprintf(out, out_size, "OK SM3 %s", hex);
         }
     } else if (strcmp(cmd, "STORE") == 0) {
-        uint8_t data[UKEY_STORE_VALUE_LEN];
-        size_t len = 0;
+        char *name = next_token(&p);
+        char *value = rest_token(&p);
+
+        if (ctx->state != UKEY_STATE_AUTHED) {
+            snprintf(out, out_size, "ERR AUTH");
+        } else if (!name || !value || strlen(name) >= UKEY_STORE_NAME_LEN || strlen(value) > UKEY_STORE_VALUE_LEN) {
+            snprintf(out, out_size, "ERR ARG");
+        } else {
+            strncpy(ctx->pending_name, name, sizeof(ctx->pending_name) - 1u);
+            ctx->pending_name[sizeof(ctx->pending_name) - 1u] = '\0';
+            memcpy(ctx->pending_msg, value, strlen(value));
+            ctx->pending_msg_len = strlen(value);
+            ctx->pending = PENDING_STORE;
+            snprintf(out, out_size, "WAIT PRESS KEY1 TO STORE, KEY2 TO CANCEL");
+        }
+    } else if (strcmp(cmd, "STORE_HEX") == 0) {
+        size_t len = 0u;
         char *name = next_token(&p);
         char *hex_data = next_token(&p);
-        ukey_status_t st = (!name || !hex_data || hex_to_bytes(hex_data, data, sizeof(data), &len) != 0)
-            ? UKEY_ERR_ARG : ukey_store_value(name, data, len);
-        if (st == UKEY_OK) snprintf(out, out_size, "OK STORE DONE");
-        else reply_status(out, out_size, st);
+
+        if (ctx->state != UKEY_STATE_AUTHED) {
+            snprintf(out, out_size, "ERR AUTH");
+        } else if (!name || !hex_data || strlen(name) >= UKEY_STORE_NAME_LEN ||
+                   hex_to_bytes(hex_data, ctx->pending_msg, sizeof(ctx->pending_msg), &len) != 0) {
+            snprintf(out, out_size, "ERR ARG");
+        } else {
+            strncpy(ctx->pending_name, name, sizeof(ctx->pending_name) - 1u);
+            ctx->pending_name[sizeof(ctx->pending_name) - 1u] = '\0';
+            ctx->pending_msg_len = len;
+            ctx->pending = PENDING_STORE;
+            snprintf(out, out_size, "WAIT PRESS KEY1 TO STORE, KEY2 TO CANCEL");
+        }
     } else if (strcmp(cmd, "READ") == 0) {
-        uint8_t data[UKEY_STORE_VALUE_LEN];
-        size_t len = 0;
-        char hex[UKEY_STORE_VALUE_LEN * 2u + 1u];
         char *name = next_token(&p);
-        ukey_status_t st = name ? ukey_read_value(name, data, sizeof(data), &len) : UKEY_ERR_ARG;
-        if (st == UKEY_OK && bytes_to_hex(data, len, hex, sizeof(hex)) == 0) snprintf(out, out_size, "OK READ %s", hex);
-        else reply_status(out, out_size, st);
+
+        if (ctx->state != UKEY_STATE_AUTHED) {
+            snprintf(out, out_size, "ERR AUTH");
+        } else if (!name || strlen(name) >= UKEY_STORE_NAME_LEN) {
+            snprintf(out, out_size, "ERR ARG");
+        } else {
+            strncpy(ctx->pending_name, name, sizeof(ctx->pending_name) - 1u);
+            ctx->pending_name[sizeof(ctx->pending_name) - 1u] = '\0';
+            ctx->pending = PENDING_READ;
+            snprintf(out, out_size, "WAIT PRESS KEY1 TO READ, KEY2 TO CANCEL");
+        }
     } else if (strcmp(cmd, "ERASE") == 0) {
         ctx->pending = PENDING_ERASE;
         snprintf(out, out_size, "WAIT PRESS KEY1 TO ERASE, KEY2 TO CANCEL");
@@ -182,4 +258,3 @@ void ukey_on_command(const char *line, char *out, size_t out_size)
         snprintf(out, out_size, "ERR UNKNOWN_CMD");
     }
 }
-

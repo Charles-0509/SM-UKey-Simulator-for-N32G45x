@@ -7,6 +7,8 @@ typedef enum {
     PENDING_NONE = 0,
     PENDING_INIT,
     PENDING_SIGN,
+    PENDING_STORE,
+    PENDING_READ,
     PENDING_ERASE
 } pending_op_t;
 
@@ -15,6 +17,7 @@ typedef struct {
     ukey_state_t state;
     pending_op_t pending;
     char pending_pin[UKEY_PIN_MAX_LEN + 1u];
+    char pending_name[UKEY_STORE_NAME_LEN];
     uint8_t pending_msg[UKEY_MAX_DATA_LEN];
     size_t pending_msg_len;
     uint8_t mode;
@@ -29,4 +32,3 @@ ukey_status_t ukey_store_value(const char *name, const uint8_t *data, size_t len
 ukey_status_t ukey_read_value(const char *name, uint8_t *out, size_t out_max, size_t *out_len);
 
 #endif
-
