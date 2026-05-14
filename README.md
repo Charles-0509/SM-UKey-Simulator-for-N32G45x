@@ -6,6 +6,7 @@
 
 - USB CDC virtual COM communication for SSCOM-style testing.
 - Text command protocol: `INFO`, `INIT`, `VERIFY_PIN`, `GET_PUBKEY`, `SIGN`, `SM3`, `STORE`, `READ`, `ERASE`.
+- Physical button support: `KEY1` is PA4 confirm/authorize, `KEY2` is PA5 cancel. The text commands `KEY1` and `KEY2` are still available for simulation.
 - UKey-like state machine with PIN retry limit and user-confirmed sensitive operations.
 - SM3 through the N32G45x official algorithm library.
 - True random generation through the N32G45x official RNG library.
@@ -57,7 +58,7 @@ STORE TOKEN 4142434431323334
 READ TOKEN
 ```
 
-`KEY1`, `KEY2`, and `KEY3` can be sent as text commands to simulate board buttons before GPIO key handling is wired in.
+`KEY1` and `KEY2` can be pressed on the board after a `WAIT ...` response. They are mapped to PA4 and PA5 by default, active-low with internal pull-ups. The same names can still be sent as text commands for testing.
 
 ## Notes
 

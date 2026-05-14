@@ -36,6 +36,7 @@
 #include "hw_config.h"
 #include "usb_lib.h"
 #include "usb_pwr.h"
+#include "ukey_buttons.h"
 #include "ukey_usb_bridge.h"
 #include "ukey_uart_bridge.h"
 
@@ -62,10 +63,11 @@ int main(void)
     USART_Config_Default();
     ukey_usb_bridge_init();
     ukey_uart_bridge_init();
+    ukey_buttons_init();
 
     while (1)
     {
-
+        ukey_buttons_poll();
     }
 }
 
