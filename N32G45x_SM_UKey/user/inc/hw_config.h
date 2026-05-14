@@ -38,7 +38,13 @@
 #define __HW_CONFIG_H
 
 /* Includes ------------------------------------------------------------------*/
+#include "app_config.h"
+#include "n32g45x.h"
+#include <stdbool.h>
+#include <stdint.h>
+#if UKEY_ENABLE_USB_CDC
 #include "usb_type.h"
+#endif
 
 //#define USB_LOW_PWR_MGMT_SUPPORT
 

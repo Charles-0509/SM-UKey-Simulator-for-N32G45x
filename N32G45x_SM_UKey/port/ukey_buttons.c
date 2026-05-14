@@ -1,8 +1,10 @@
 #include "ukey_buttons.h"
 #include "ukey_protocol.h"
 #include "ukey_uart_bridge.h"
-#include "ukey_usb_bridge.h"
 #include "app_config.h"
+#if UKEY_ENABLE_USB_CDC
+#include "ukey_usb_bridge.h"
+#endif
 #include "n32g45x.h"
 
 #ifndef UKEY_BUTTON_GPIO
@@ -60,8 +62,10 @@ static void emit_key_result(ukey_key_t key)
     ukey_on_key(key, out, sizeof(out));
     ukey_uart_send_string(out);
     ukey_uart_send_string("\r\n");
+#if UKEY_ENABLE_USB_CDC
     ukey_usb_send_string(out);
     ukey_usb_send_string("\r\n");
+#endif
 }
 
 void ukey_buttons_init(void)

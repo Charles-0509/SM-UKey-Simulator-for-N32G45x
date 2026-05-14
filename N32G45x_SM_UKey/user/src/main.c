@@ -33,11 +33,16 @@
  * @copyright Copyright (c) 2019, Nations Technologies Inc. All rights reserved.
  */
 #include "n32g45x.h"
+#include "app_config.h"
 #include "hw_config.h"
+#if UKEY_ENABLE_USB_CDC
 #include "usb_lib.h"
 #include "usb_pwr.h"
+#endif
 #include "ukey_buttons.h"
+#if UKEY_ENABLE_USB_CDC
 #include "ukey_usb_bridge.h"
+#endif
 #include "ukey_uart_bridge.h"
 
 __IO uint32_t TimingDelay     = 0;
@@ -55,13 +60,17 @@ int main(void)
 {
     Set_System();
 
+#if UKEY_ENABLE_USB_CDC
     USB_Interrupts_Config();
 
     Set_USBClock();
 
     USB_Init();
+#endif
     USART_Config_Default();
+#if UKEY_ENABLE_USB_CDC
     ukey_usb_bridge_init();
+#endif
     ukey_uart_bridge_init();
     ukey_buttons_init();
 

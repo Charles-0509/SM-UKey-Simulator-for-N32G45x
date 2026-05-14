@@ -13,5 +13,10 @@
 #define UKEY_SECURE_MAGIC            0x534D554Bu /* "SMUK" */
 #define UKEY_SECURE_VERSION          1u
 
-#endif
+/*
+ * Keep the default build under the Keil MDK-Lite 32 KB code-size limit.
+ * Set this to 1 to enable the MCU USB CDC stack when using a licensed toolchain.
+ */
+#define UKEY_ENABLE_USB_CDC          0u
 
+#endif

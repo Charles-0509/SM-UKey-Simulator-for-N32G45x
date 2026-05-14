@@ -4,7 +4,7 @@
 
 ## Features
 
-- USB CDC virtual COM communication for SSCOM-style testing.
+- Default Keil build uses DEBUG USB's USART1 virtual COM for SSCOM-style testing and stays under the MDK-Lite 32 KB linker limit.
 - Text command protocol: `INFO`, `INIT`, `VERIFY_PIN`, `GET_PUBKEY`, `SIGN`, `SM3`, `STORE`, `STORE_HEX`, `READ`, `ERASE`.
 - Physical button support: `KEY1` is PA4 confirm/authorize, `KEY2` is PA5 cancel. The text commands `KEY1` and `KEY2` are still available for simulation.
 - UKey-like state machine with PIN retry limit and user-confirmed sensitive operations.
@@ -12,7 +12,7 @@
 - True random generation through the N32G45x official RNG library.
 - Software SM4-CBC implementation for encrypted secure storage.
 - Replaceable software SM2 facade for the private-key-in-device signing workflow.
-- Trimmed Keil MDK project with only the required CMSIS, peripheral, USBFS, and algorithm files.
+- Trimmed Keil MDK project with only the required CMSIS, peripheral, optional USBFS, and algorithm files.
 
 ## Project Layout
 
@@ -39,7 +39,10 @@ The trimmed project has been verified with ARMCC V5.06:
 
 ```text
 0 Error(s), 0 Warning(s)
+Program Size: Code=28182 RO-data=2314 RW-data=44 ZI-data=8620
 ```
+
+The default build keeps `UKEY_ENABLE_USB_CDC` set to `0` in `N32G45x_SM_UKey/app/app_config.h`, so communication uses USART1 through the board's DEBUG USB port at `115200 8N1`. This avoids Keil MDK-Lite's 32 KB code-size limit. Set `UKEY_ENABLE_USB_CDC` to `1` only if you use a licensed Keil toolchain and need the MCU USB CDC stack.
 
 ## SSCOM Test Flow
 

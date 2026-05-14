@@ -34,8 +34,11 @@
  */
 #include "n32g45x_it.h"
 #include "n32g45x.h"
+#include "app_config.h"
 #include "main.h"
+#if UKEY_ENABLE_USB_CDC
 #include "usb_istr.h"
+#endif
 #include "hw_config.h"
 #include "ukey_uart_bridge.h"
 /** @addtogroup N32G45X_StdPeriph_Template
@@ -131,7 +134,9 @@ void DMA_IRQ_HANDLER(void)
  */
 void USB_LP_CAN1_RX0_IRQHandler(void)
 {
+#if UKEY_ENABLE_USB_CDC
     USB_Istr();
+#endif
 }
 
 
@@ -164,7 +169,9 @@ void USART1_IRQHandler(void)
 *******************************************************************************/
 void USBWakeUp_IRQHandler(void)
 {
+#if UKEY_ENABLE_USB_CDC
     EXTI_ClrITPendBit(EXTI_LINE18);
+#endif
 }
 
 /******************************************************************************/

@@ -34,11 +34,15 @@
  */
 /* Includes ------------------------------------------------------------------*/
 
+#include "app_config.h"
+#include "n32g45x.h"
+#if UKEY_ENABLE_USB_CDC
 #include "usb_lib.h"
 #include "usb_prop.h"
 #include "usb_desc.h"
-#include "hw_config.h"
 #include "usb_pwr.h"
+#endif
+#include "hw_config.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -54,7 +58,9 @@ uint32_t USART_Rx_length  = 0;
 uint8_t  USB_Tx_State = 0;
 
 /* Extern variables ----------------------------------------------------------*/
+#if UKEY_ENABLE_USB_CDC
 extern LINE_CODING linecoding;
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -66,6 +72,7 @@ extern LINE_CODING linecoding;
 *******************************************************************************/
 void Set_System(void)
 {
+#if UKEY_ENABLE_USB_CDC
     EXTI_InitType EXTI_InitStructure;
 
     /* Configure the EXTI line 18 connected internally to the USB IP */
@@ -75,6 +82,7 @@ void Set_System(void)
     EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
     EXTI_InitStructure.EXTI_LineCmd = ENABLE;
     EXTI_InitPeripheral(&EXTI_InitStructure);
+#endif
 
 }
 
@@ -86,10 +94,12 @@ void Set_System(void)
 *******************************************************************************/
 void Set_USBClock(void)
 {
+#if UKEY_ENABLE_USB_CDC
     /* Select USBCLK source */
     RCC_ConfigUsbClk(RCC_USBCLK_SRC_PLLCLK_DIV3);
     /* Enable the USB clock */
     RCC_EnableAPB1PeriphClk(RCC_APB1_PERIPH_USB, ENABLE);
+#endif
 }
 
 /*******************************************************************************
@@ -100,8 +110,10 @@ void Set_USBClock(void)
 *******************************************************************************/
 void Enter_LowPowerMode(void)
 {
+#if UKEY_ENABLE_USB_CDC
     /* Set the device state to suspend */
     bDeviceState = SUSPENDED;
+#endif
 }
 
 /*******************************************************************************
@@ -112,6 +124,7 @@ void Enter_LowPowerMode(void)
 *******************************************************************************/
 void Leave_LowPowerMode(void)
 {
+#if UKEY_ENABLE_USB_CDC
     USB_DeviceMess *pInfo = &Device_Info;
 
     /* Set the device state to the correct state */
@@ -124,6 +137,7 @@ void Leave_LowPowerMode(void)
     {
         bDeviceState = ATTACHED;
     }
+#endif
 }
 
 /**
@@ -179,6 +193,7 @@ void USART_COM_Init(USART_InitType* USART_InitStruct)
 *******************************************************************************/
 void USB_Interrupts_Config(void)
 {
+#if UKEY_ENABLE_USB_CDC
     NVIC_InitType NVIC_InitStructure;
 
     /* 2 bit for pre-emption priority, 2 bits for subpriority */
@@ -196,6 +211,7 @@ void USB_Interrupts_Config(void)
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
+#endif
 }
 
 /*******************************************************************************
@@ -226,6 +242,7 @@ void USART_Config_Default(void)
 *******************************************************************************/
 bool USART_Config(void)
 {
+#if UKEY_ENABLE_USB_CDC
     USART_InitStructure.BaudRate = linecoding.bitrate;
     USART_InitStructure.WordLength          = USART_WL_8B;
     USART_InitStructure.StopBits            = USART_STPB_1;
@@ -235,6 +252,9 @@ bool USART_Config(void)
 
     USART_COM_Init(&USART_InitStructure);
     return (true);
+#else
+    return (false);
+#endif
 }
 
 /*******************************************************************************
@@ -258,6 +278,7 @@ void USB_To_USART_Send_Data(uint8_t* data_buffer, uint8_t Nb_bytes)
 *******************************************************************************/
 void Handle_USBAsynchXfer (void)
 {
+#if UKEY_ENABLE_USB_CDC
     uint16_t USB_Tx_ptr;
     uint16_t USB_Tx_length;
 
@@ -304,6 +325,7 @@ void Handle_USBAsynchXfer (void)
         USB_SetEpTxCnt(ENDP1, USB_Tx_length);
         USB_SetEpTxValid(ENDP1); 
     }
+#endif
 }
 /*******************************************************************************
 * Function Name  : UART_To_USB_Send_Data.
