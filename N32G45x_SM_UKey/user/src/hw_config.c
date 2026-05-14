@@ -206,24 +206,8 @@ void USB_Interrupts_Config(void)
 *******************************************************************************/
 void USART_Config_Default(void)
 {
-  /* USART1 default configuration */
-  /* USART1 configured as follow:
-        - BaudRate = 115200 baud  
-        - Word Length = 8 Bits
-        - One Stop Bit
-        - Parity Odd
-        - Hardware flow control disabled
-        - Receive and transmit enabled
-  */
-    USART_InitStructure.BaudRate = 115200;
-    USART_InitStructure.WordLength          = USART_WL_8B;
-    USART_InitStructure.StopBits            = USART_STPB_1;
-    USART_InitStructure.Parity              = USART_PE_NO;
-    USART_InitStructure.HardwareFlowControl = USART_HFCTRL_NONE;
-    USART_InitStructure.Mode                = USART_MODE_RX | USART_MODE_TX;
-
-    /* Configure and enable the USART1 */
-    USART_COM_Init(&USART_InitStructure);
+    /* This project uses USB CDC directly and does not bridge to USART1.
+       Leaving USART1 RX enabled causes floating-pin noise to appear in SSCOM. */
 }
 
 /*******************************************************************************
@@ -236,77 +220,6 @@ void USART_Config_Default(void)
 *******************************************************************************/
 bool USART_Config(void)
 {
-
-    /* set the Stop bit*/
-    switch (linecoding.format)
-    {
-        case 0:
-          USART_InitStructure.StopBits = USART_STPB_1;
-          break;
-        case 1:
-          USART_InitStructure.StopBits = USART_STPB_1_5;
-          break;
-        case 2:
-          USART_InitStructure.StopBits = USART_STPB_2;
-          break;
-        default :
-        {
-          USART_Config_Default();
-          return (false);
-        }
-    }
-
-    /* set the parity bit*/
-    switch (linecoding.paritytype)
-    {
-        case 0:
-          USART_InitStructure.Parity = USART_PE_NO;
-          break;
-        case 1:
-          USART_InitStructure.Parity = USART_PE_EVEN;
-          break;
-        case 2:
-          USART_InitStructure.Parity = USART_PE_ODD;
-          break;
-        default :
-        {
-          USART_Config_Default();
-          return (false);
-        }
-    }
-
-    /*set the data type : only 8bits and 9bits is supported */
-    switch (linecoding.datatype)
-    {
-        case 0x07:
-          /* With this configuration a parity (Even or Odd) should be set */
-          USART_InitStructure.WordLength = USART_WL_8B;
-          break;
-        case 0x08:
-          if (USART_InitStructure.Parity == USART_PE_NO)
-          {
-            USART_InitStructure.WordLength = USART_WL_8B;
-          }
-          else 
-          {
-            USART_InitStructure.WordLength = USART_WL_9B;
-          }
-          
-          break;
-        default :
-        {
-          USART_Config_Default();
-          return (false);
-        }
-    }
-
-    USART_InitStructure.BaudRate = linecoding.bitrate;
-    USART_InitStructure.HardwareFlowControl = USART_HFCTRL_NONE;
-    USART_InitStructure.Mode = USART_MODE_RX | USART_MODE_TX;
-
-    /* Configure and enable the USART */
-    USART_COM_Init(&USART_InitStructure);
-
     return (true);
 }
 
@@ -319,13 +232,8 @@ bool USART_Config(void)
 *******************************************************************************/
 void USB_To_USART_Send_Data(uint8_t* data_buffer, uint8_t Nb_bytes)
 {
-    uint32_t i;
-
-    for (i = 0; i < Nb_bytes; i++)
-    {
-        USART_SendData(USART1, *(data_buffer + i));
-        while(USART_GetFlagStatus(USART1, USART_FLAG_TXDE) == RESET); 
-    }
+    (void)data_buffer;
+    (void)Nb_bytes;
 }
 
 /*******************************************************************************
@@ -391,21 +299,6 @@ void Handle_USBAsynchXfer (void)
 *******************************************************************************/
 void USART_To_USB_Send_Data(void)
 {
-    if (linecoding.datatype == 7)
-    {
-        USART_Rx_Buffer[USART_Rx_ptr_in] = USART_ReceiveData(USART1) & 0x7F;
-    }
-    else if (linecoding.datatype == 8)
-    {
-        USART_Rx_Buffer[USART_Rx_ptr_in] = USART_ReceiveData(USART1);
-    }
-
-    USART_Rx_ptr_in++;
-
-    /* To avoid buffer overflow */
-    if(USART_Rx_ptr_in == USART_RX_DATA_SIZE)
-    {
-        USART_Rx_ptr_in = 0;
-    }
+    /* No USART-to-USB forwarding in the UKey firmware. */
 }
 

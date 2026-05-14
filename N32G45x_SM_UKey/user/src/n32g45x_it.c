@@ -143,17 +143,7 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
 *******************************************************************************/
 void USART1_IRQHandler(void)
 {
-    if (USART_GetFlagStatus(USART1, USART_FLAG_RXDNE) != RESET)
-    {
-        /* Send the received data to the PC Host*/
-        USART_To_USB_Send_Data();
-    }
-
-    /* If overrun condition occurs, clear the ORE flag and recover communication */
-    if (USART_GetFlagStatus(USART1, USART_FLAG_OREF) != RESET)
-    {
-        (void)USART_ReceiveData(USART1);
-    }
+    /* USART1 is unused. USB CDC packets are handled in EP3_OUT_Callback(). */
 }
 
 /*******************************************************************************
